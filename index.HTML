@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlgoBot — Aprende Algoritmos</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --sky:#1a1a2e;--surface:#16213e;--card:#0f3460;
+    --green:#4ade80;--red:#f87171;--yellow:#fbbf24;
+    --blue:#60a5fa;--orange:#fb923c;--purple:#c084fc;
+    --teal:#2dd4bf;--white:#f0f9ff;--muted:#94a3b8;
+    --cell:64px;
+  }
+  body{
+    font-family:'Nunito',sans-serif;
+    background:var(--sky);
+    color:var(--white);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  body::before{
+    content:'';position:fixed;inset:0;
+    background:radial-gradient(ellipse at 20% 50%, #1e1b4b 0%, transparent 60%),
+               radial-gradient(ellipse at 80% 20%, #172554 0%, transparent 50%);
+    pointer-events:none;z-index:0;
+  }
+
+  .screen{display:none;position:relative;z-index:1}
+  .screen.active{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px}
+
+  /* ===== INTRO ===== */
+  #intro{justify-content:center;gap:24px;text-align:center}
+  .logo{font-family:'Fredoka One',cursive;font-size:64px;line-height:1;
+    background:linear-gradient(135deg,var(--teal),var(--blue),var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .bot-hero{font-size:100px;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+  .world-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .world-card{
+    background:var(--surface);border:2px solid transparent;
+    border-radius:20px;padding:24px 32px;cursor:pointer;
+    transition:all .3s;min-width:200px;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .world-card:hover{transform:translateY(-4px);border-color:var(--c1)}
+  .world-card .icon{font-size:48px;margin-bottom:8px}
+  .world-card .wname{font-family:'Fredoka One',cursive;font-size:22px}
+  .world-2{--c1:#c084fc}
+
+  /* ===== JUEGO ===== */
+  #game{align-items:stretch;padding:12px 20px;max-width:1100px;margin:0 auto;width:100%}
+  .game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;width:100%}
+  .game-body{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+
+  /* REJILLA */
+  .grid-wrap{background:var(--surface);border-radius:20px;padding:12px;border:2px solid rgba(255,255,255,0.1)}
+  #grid{display:grid;grid-template-columns:repeat(6,var(--cell));grid-template-rows:repeat(6,var(--cell));gap:4px}
+  .cell{
+    width:var(--cell);height:var(--cell);background:rgba(255,255,255,0.03);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:32px;transition: all 0.2s;
+  }
+  .cell[data-type="wall"]{background:rgba(255,255,255,0.1);font-size:20px}
+
+  /* PANEL DERECHO */
+  .right-panel{flex:1;min-width:340px;display:flex;flex-direction:column;gap:12px}
+  .box{background:var(--surface);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.08)}
+  .title-sm{font-family:'Fredoka One',cursive;font-size:14px;color:var(--yellow);margin-bottom:8px;text-transform:uppercase}
+
+  /* CONDICIONAL UI */
+  .logic-helper{
+    background:rgba(192,132,252,0.1);border:1px solid var(--purple);
+    padding:12px;border-radius:12px;margin-bottom:10px;font-size:13px;
+  }
+  .cond-select{
+    background:var(--card);color:white;border:1px solid var(--purple);
+    padding:4px 8px;border-radius:6px;font-family:inherit;cursor:pointer;
+  }
+  
+  .slots-row{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;min-height:44px}
+  .slot{
+    width:34px;height:34px;border-radius:6px;background:rgba(255,255,255,0.05);
+    border:1px dashed rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;
+    font-size:18px;cursor:pointer;
+  }
+  .slot.filled{border-style:solid;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.4)}
+  .slot.executing{background:var(--teal);box-shadow:0 0 15px var(--teal);transform:scale(1.1);border-color:white}
+
+  .palette{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+  .btn-p{
+    width:38px;height:38px;border-radius:8px;border:none;cursor:pointer;
+    font-size:18px;transition:0.2s;
+  }
+  .btn-p:hover{transform:scale(1.1)}
+  .btn-p.A{background:var(--teal)}
+  .btn-p.B{background:var(--orange)}
+
+  .btn-run{
+    width:100%;padding:14px;border-radius:12px;border:none;background:var(--green);
+    color:#052e16;font-weight:900;font-size:16px;cursor:pointer;margin-top:10px;
+    box-shadow:0 4px 0 #166534;
+  }
+  .btn-run:active{transform:translateY(2px);box-shadow:0 2px 0 #166534}
+
+  .feedback{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:var(--card);padding:30px;border-radius:20px;text-align:center;
+    border:2px solid var(--teal);display:none;z-index:100;width:320px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+
+  .active-block-ui{background:rgba(255,255,255,0.05);padding:10px;border-radius:12px;border:1px solid transparent}
+  .active-block-ui.running-glow{border-color:var(--yellow);background:rgba(251,191,36,0.1)}
+</style>
+</head>
+<body>
+
+<div id="intro" class="screen active">
+  <div class="bot-hero">🤖</div>
+  <div class="logo">AlgoBot</div>
+  <p>Aprende condicionales paso a paso</p>
+  <div class="world-cards">
+    <div class="world-card world-2" onclick="startWorld(2)">
+      <div class="icon">🔮</div>
+      <div class="wname">Mundo 2</div>
+      <p style="font-size:12px;color:var(--muted)">Condicionales IF/ELSE</p>
+    </div>
+  </div>
+</div>
+
+<div id="game" class="screen">
+  <div class="game-header">
+    <div id="level-label" style="font-weight:800;font-family:'Fredoka One'">Nivel 1</div>
+    <div id="lives-display">❤️❤️❤️</div>
+    <button onclick="location.reload()" style="background:none;border:none;color:white;cursor:pointer;font-size:24px">🏠</button>
+  </div>
+
+  <div class="game-body">
+    <div class="grid-wrap">
+      <div id="grid"></div>
+    </div>
+
+    <div class="right-panel">
+      <div class="box">
+        <div class="title-sm">🎯 Tu Misión</div>
+        <p id="mission-text" style="font-size:14px;line-height:1.4;color:#cbd5e1"></p>
+      </div>
+
+      <div class="box" style="border-color:var(--purple)">
+        <div class="title-sm" style="color:var(--purple)">🧠 Lógica de Decisión</div>
+        
+        <div class="logic-helper">
+          <b>PASO 1:</b> El robot mira si el nivel tiene...<br>
+          <select id="cond-check" class="cond-select">
+            <option value="key">🔑 Una Llave</option>
+            <option value="none">❌ Nada especial</option>
+          </select>
+        </div>
+
+        <div id="ui-block-A" class="active-block-ui" style="margin-bottom:10px">
+          <p style="font-size:11px;color:var(--teal);margin-bottom:6px;font-weight:800">✅ SI SE CUMPLE: Ejecutar Bloque A</p>
+          <div class="slots-row" id="slots-A"></div>
+          <div class="palette">
+            <button class="btn-p A" onclick="add('➡️','right','A')">➡️</button>
+            <button class="btn-p A" onclick="add('⬅️','left','A')">⬅️</button>
+            <button class="btn-p A" onclick="add('⬆️','up','A')">⬆️</button>
+            <button class="btn-p A" onclick="add('⬇️','down','A')">⬇️</button>
+          </div>
+        </div>
+
+        <div id="ui-block-B" class="active-block-ui">
+          <p style="font-size:11px;color:var(--orange);margin-bottom:6px;font-weight:800">❌ SI NO SE CUMPLE: Ejecutar Bloque B</p>
+          <div class="slots-row" id="slots-B"></div>
+          <div class="palette">
+            <button class="btn-p B" onclick="add('➡️','right','B')">➡️</button>
+            <button class="btn-p B" onclick="add('⬅️','left','B')">⬅️</button>
+            <button class="btn-p B" onclick="add('⬆️','up','B')">⬆️</button>
+            <button class="btn-p B" onclick="add('⬇️','down','B')">⬇️</button>
+          </div>
+        </div>
+
+        <button class="btn-run" onclick="run()">▶ INICIAR PROGRAMA</button>
+        <button onclick="clearAll()" style="width:100%;background:none;border:none;color:var(--muted);font-size:11px;margin-top:12px;cursor:pointer;text-decoration:underline">Borrar todos los bloques</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="feedback" class="feedback">
+  <div id="fb-icon" style="font-size:60px;margin-bottom:10px"></div>
+  <h2 id="fb-title" style="font-family:'Fredoka One'"></h2>
+  <p id="fb-msg" style="margin:15px 0;color:#cbd5e1"></p>
+  <button id="fb-btn" class="btn-run" style="margin:0">Continuar</button>
+</div>
+
+<script>
+const MAX_STEPS = 12;
+const LEVELS = [
+  {bot:[0,0], goal:[0,4], key:[0,2], mission:"¡Nivel 1! Este nivel TIENE llave. Pon el selector en 'Una Llave' y programa el Bloque A para recoger la llave 🔑 y llegar a la estrella ⭐."},
+  {bot:[0,0], goal:[4,0], obstacles:[[1,0],[2,0]], mission:"¡Nivel 2! Aquí NO hay llave. El robot verá que tu condición de buscar llave es 'Falsa' y usará el Bloque B. ¡Programa el Bloque B!"},
+  {bot:[0,0], goal:[5,5], key:[2,2], mission:"¡Nivel 3! La estrella está lejos. Necesitas recoger la llave en [2,2] y luego seguir caminando hasta [5,5]. ¡Usa el Bloque A!"},
+  {bot:[0,0], goal:[0,5], obstacles:[[0,2],[1,2],[2,2]], key:[3,2], mission:"¡Nivel 4! Un muro bloquea el camino. Debes bajar a por la llave, subir y cruzar el muro."},
+  {bot:[5,0], goal:[0,5], obstacles:[[3,3],[3,4],[3,5]], mission:"¡Nivel 5! Sin llave. El robot usará el Bloque B. Rodéalo por arriba para llegar a la meta."},
+  {bot:[0,0], goal:[5,0], key:[0,5], mission:"¡Nivel 6! La llave está al fondo a la derecha, pero la meta al fondo a la izquierda. ¡Trazado largo!"},
+  {bot:[3,0], goal:[3,5], obstacles:[[2,3],[3,3],[4,3]], key:[1,2], mission:"¡Nivel 7! Muro central. Busca la llave arriba y atraviesa el hueco que se libera."},
+  {bot:[0,0], goal:[5,3], obstacles:[[1,1],[1,2],[1,3],[1,4],[3,1],[3,2],[3,3],[3,4]], mission:"¡Nivel 8! Doble muro horizontal. No hay llave, así que programa el Bloque B para hacer el zigzag."},
+  {bot:[5,5], goal:[0,0], key:[5,0], mission:"¡Nivel 9! El robot empieza en la esquina. Ve a la izquierda por la llave y sube todo el camino hasta el origen."},
+  {bot:[0,0], goal:[5,5], key:[3,3], obstacles:[[1,0],[1,1],[1,2],[4,3],[4,4],[4,5]], mission:"¡DESAFÍO FINAL! Un laberinto complejo. Recoge la llave y cruza el último pasillo."}
+];
+
+let cur = 0;
+let lives = 3;
+let progA = [], progB = [];
+let botPos = [0,0];
+let running = false;
+let hasKey = false;
+
+function startWorld(){
+  document.getElementById('intro').classList.remove('active');
+  document.getElementById('game').classList.add('active');
+  initLevel();
+}
+
+function initLevel(){
+  const lv = LEVELS[cur];
+  botPos = [...lv.bot];
+  hasKey = false;
+  progA = []; 
+  progB = [];
+  document.getElementById('level-label').textContent = `Nivel ${cur + 1}`;
+  document.getElementById('mission-text').textContent = lv.mission;
+  resetSimulation();
+  renderSlots();
+}
+
+function resetSimulation(){
+  const lv = LEVELS[cur];
+  botPos = [...lv.bot];
+  hasKey = false;
+  document.getElementById('ui-block-A').classList.remove('running-glow');
+  document.getElementById('ui-block-B').classList.remove('running-glow');
+  renderGrid();
+}
+
+function renderGrid(){
+  const lv = LEVELS[cur];
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  for(let r=0; r<6; r++){
+    for(let c=0; c<6; c++){
+      const d = document.createElement('div');
+      d.className = 'cell';
+      d.id = `c-${r}-${c}`;
+      if(r===botPos[0] && c===botPos[1]) d.textContent = '🤖';
+      else if(r===lv.goal[0] && c===lv.goal[1]) d.textContent = '⭐';
+      else if(lv.key && r===lv.key[0] && c===lv.key[1] && !hasKey) d.textContent = '🔑';
+      else if(lv.obstacles && lv.obstacles.some(o=>o[0]===r && o[1]===c)) {
+        d.textContent = '🧱'; d.dataset.type="wall";
+      }
+      g.appendChild(d);
+    }
+  }
+}
+
+function add(emoji, dir, b){
+  if(running) return;
+  const target = b === 'A' ? progA : progB;
+  if(target.length < MAX_STEPS) target.push({emoji, dir});
+  renderSlots();
+}
+
+function clearAll(){ 
+  if(running) return;
+  progA = []; progB = []; 
+  renderSlots(); 
+}
+
+function renderSlots(){
+  const draw = (id, arr, b) => {
+    const r = document.getElementById(id);
+    r.innerHTML = '';
+    for(let i=0; i<MAX_STEPS; i++){
+      const s = document.createElement('div');
+      s.className = 'slot' + (arr[i] ? ' filled' : '');
+      s.id = `s-${b}-${i}`;
+      if(arr[i]) s.textContent = arr[i].emoji;
+      r.appendChild(s);
+    }
+  };
+  draw('slots-A', progA, 'A');
+  draw('slots-B', progB, 'B');
+}
+
+async function run(){
+  if(running) return;
+  running = true;
+  resetSimulation();
+  
+  const lv = LEVELS[cur];
+  const choice = document.getElementById('cond-check').value;
+  const levelHasKey = !!lv.key;
+
+  let activeBlock = (choice === 'key' && levelHasKey) || (choice === 'none' && !levelHasKey) ? 'A' : 'B';
+  let seq = activeBlock === 'A' ? progA : progB;
+
+  document.getElementById(`ui-block-${activeBlock}`).classList.add('running-glow');
+
+  if(seq.length === 0){
+    showFB(false, "Bloque Vacío", `El robot intentó usar el Bloque ${activeBlock} pero no tiene instrucciones.`);
+    running = false;
+    return;
+  }
+
+  for(let i=0; i<seq.length; i++){
+    if(!running) break;
+    const s = document.getElementById(`s-${activeBlock}-${i}`);
+    if(s) s.classList.add('executing');
+    
+    const ok = await move(seq[i].dir);
+    
+    if(!ok){
+      showFB(false, "¡Crash!", "El robot chocó. ¡Revisa tus flechas!");
+      break;
+    }
+
+    if(botPos[0] === lv.goal[0] && botPos[1] === lv.goal[1]){
+      if(cur === LEVELS.length - 1) {
+        showFB(true, "¡DOMINAS LAS CONDICIONES!", "Has completado todos los niveles. ¡Eres un experto en programación!");
+      } else {
+        showFB(true, "¡Nivel Superado!", "Has usado el condicional correctamente.");
+      }
+      break;
+    }
+    
+    await new Promise(r => setTimeout(r, 400));
+    if(s) s.classList.remove('executing');
+  }
+
+  if(!(botPos[0] === lv.goal[0] && botPos[1] === lv.goal[1]) && running){
+    showFB(false, "Casi...", "El robot se detuvo sin llegar a la estrella.");
+  }
+  running = false;
+}
+
+async function move(dir){
+  let [r, c] = botPos;
+  if(dir==='right') c++; else if(dir==='left') c--;
+  else if(dir==='up') r--; else if(dir==='down') r++;
+
+  if(r<0 || r>=6 || c<0 || c>=6) return false;
+  const target = document.getElementById(`c-${r}-${c}`);
+  if(target && target.dataset.type === "wall") return false;
+
+  const lv = LEVELS[cur];
+  if(lv.key && r===lv.key[0] && c===lv.key[1]) {
+    hasKey = true;
+  }
+
+  botPos = [r, c];
+  renderGrid();
+  return true;
+}
+
+function showFB(win, t, m){
+  const f = document.getElementById('feedback');
+  f.style.display = 'block';
+  f.style.borderColor = win ? 'var(--green)' : 'var(--red)';
+  document.getElementById('fb-icon').textContent = win ? (cur === LEVELS.length - 1 ? '🏆' : '🎉') : '😬';
+  document.getElementById('fb-title').textContent = t;
+  document.getElementById('fb-msg').textContent = m;
+  const b = document.getElementById('fb-btn');
+  
+  if(win && cur === LEVELS.length - 1) {
+    b.textContent = "Volver al Inicio";
+    b.onclick = () => location.reload();
+  } else {
+    b.textContent = win ? "Siguiente Nivel" : "Reintentar";
+    b.onclick = () => {
+      f.style.display = 'none';
+      if(win) { 
+        cur++; 
+        initLevel();
+      } else {
+        resetSimulation();
+      }
+    };
+  }
+  running = false;
+}
+</script>
+</body>
+</html>
