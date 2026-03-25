@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlgoBot — Aprende Algoritmos</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --sky:#1a1a2e;--surface:#16213e;--card:#0f3460;
+    --green:#4ade80;--red:#f87171;--yellow:#fbbf24;
+    --blue:#60a5fa;--orange:#fb923c;--purple:#c084fc;
+    --teal:#2dd4bf;--white:#f0f9ff;--muted:#94a3b8;
+    --cell:68px;
+  }
+  body{
+    font-family:'Nunito',sans-serif;
+    background:var(--sky);
+    color:var(--white);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* STARS BACKGROUND */
+  body::before{
+    content:'';position:fixed;inset:0;
+    background:radial-gradient(ellipse at 20% 50%, #1e1b4b 0%, transparent 60%),
+               radial-gradient(ellipse at 80% 20%, #172554 0%, transparent 50%);
+    pointer-events:none;z-index:0;
+  }
+
+  /* SCREENS */
+  .screen{display:none;position:relative;z-index:1}
+  .screen.active{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px}
+
+  /* ===== INTRO SCREEN ===== */
+  #intro{justify-content:center;gap:24px;text-align:center}
+  .logo{font-family:'Fredoka One',cursive;font-size:64px;line-height:1;
+    background:linear-gradient(135deg,var(--teal),var(--blue),var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .tagline{font-size:18px;color:var(--muted);max-width:420px}
+  .bot-hero{font-size:100px;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+  .world-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .world-card{
+    background:var(--surface);border:2px solid transparent;
+    border-radius:20px;padding:24px 32px;cursor:pointer;
+    transition:all .3s;min-width:200px;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .world-card::before{
+    content:'';position:absolute;inset:0;border-radius:18px;
+    background:linear-gradient(135deg,var(--c1),var(--c2));opacity:.12;
+    transition:opacity .3s;
+  }
+  .world-card:hover::before{opacity:.25}
+  .world-card:hover{transform:translateY(-4px);border-color:var(--c1)}
+  .world-card .icon{font-size:48px;margin-bottom:8px}
+  .world-card .wname{font-family:'Fredoka One',cursive;font-size:22px}
+  .world-card .wdesc{font-size:13px;color:var(--muted);margin-top:4px}
+  .world-card .badge{
+    display:inline-block;margin-top:10px;padding:3px 12px;
+    border-radius:99px;font-size:11px;font-weight:700;
+    background:rgba(255,255,255,.1);
+  }
+  .world-1{--c1:#4ade80;--c2:#2dd4bf}
+  .world-2{--c1:#c084fc;--c2:#60a5fa}
+
+  /* ===== LESSON SCREEN ===== */
+  #lesson{justify-content:center;gap:20px;max-width:720px;margin:0 auto;text-align:center}
+  .lesson-icon{font-size:72px;animation:float 2s ease-in-out infinite}
+  .lesson-title{font-family:'Fredoka One',cursive;font-size:36px;color:var(--teal)}
+  .lesson-box{
+    background:var(--surface);border-radius:20px;padding:28px 36px;
+    border:1.5px solid rgba(255,255,255,.08);max-width:600px;
+  }
+  .concept-visual{
+    background:var(--card);border-radius:14px;padding:16px;
+    margin:16px 0;font-family:monospace;font-size:15px;
+    line-height:2;text-align:left;border:1px solid rgba(255,255,255,.1);
+  }
+  .kw{color:var(--yellow);font-weight:700}
+  .cmt{color:var(--muted)}
+  .val{color:var(--green)}
+  .lesson-desc{font-size:15px;line-height:1.7;color:#cbd5e1}
+
+  .btn{
+    padding:12px 32px;border-radius:99px;border:none;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;
+    cursor:pointer;transition:all .2s;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff}
+  .btn-primary:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(45,212,191,.3)}
+  .btn-sm{padding:8px 20px;font-size:14px}
+
+  /* ===== GAME SCREEN ===== */
+  #game{align-items:stretch;padding:12px 20px;max-width:1100px;margin:0 auto;width:100%}
+
+  .game-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:12px;flex-wrap:wrap;gap:8px;
+  }
+  .level-info{font-family:'Fredoka One',cursive;font-size:20px;color:var(--teal)}
+  .score-badge{
+    background:var(--surface);border-radius:99px;padding:6px 16px;
+    font-weight:800;font-size:16px;border:1px solid rgba(255,255,255,.1);
+  }
+
+  .game-body{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+
+  /* GRID */
+  .grid-wrap{
+    background:var(--surface);border-radius:20px;padding:14px;
+    border:2px solid rgba(255,255,255,.08);flex-shrink:0;
+  }
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(6,var(--cell));
+    grid-template-rows:repeat(6,var(--cell));
+    gap:3px;
+  }
+  .cell{
+    width:var(--cell);height:var(--cell);
+    background:rgba(255,255,255,.04);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;position:relative;transition:background .2s;
+    border:1px solid rgba(255,255,255,.05);
+  }
+  .cell.trail{background:rgba(45,212,191,.12)}
+  .cell.active-bot{background:rgba(96,165,250,.2);animation:pulse-cell .6s ease-in-out infinite alternate}
+  @keyframes pulse-cell{from{background:rgba(96,165,250,.2)}to{background:rgba(96,165,250,.35)}}
+
+  /* CELL TYPES */
+  .cell[data-type="wall"]{background:rgba(30,30,50,.8);font-size:22px}
+  .cell[data-type="ice"]{background:rgba(186,230,253,.08)}
+  .cell[data-type="fire"]{background:rgba(251,146,60,.08)}
+  .cell[data-type="key"]{background:rgba(251,191,36,.08)}
+  .cell[data-type="door"]{background:rgba(192,132,252,.08)}
+
+  /* CONDITION INDICATOR on cell */
+  .cond-badge{
+    position:absolute;top:2px;right:2px;
+    font-size:10px;background:rgba(0,0,0,.5);
+    border-radius:4px;padding:1px 4px;font-weight:700;
+  }
+
+  /* RIGHT PANEL */
+  .right-panel{flex:1;min-width:260px;display:flex;flex-direction:column;gap:12px}
+
+  .mission-box{
+    background:var(--surface);border-radius:16px;padding:16px;
+    border:1.5px solid rgba(255,255,255,.08);
+  }
+  .mission-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--yellow);margin-bottom:8px}
+  .mission-text{font-size:14px;line-height:1.6;color:#cbd5e1}
+  .mission-hint{
+    margin-top:10px;padding:10px;background:rgba(96,165,250,.1);
+    border-radius:10px;border-left:3px solid var(--blue);
+    font-size:13px;color:var(--blue);
+  }
+
+  /* CONCEPT PANEL (conditionals) */
+  .concept-panel{
+    background:var(--surface);border-radius:16px;padding:14px;
+    border:1.5px solid rgba(192,132,252,.3);font-family:monospace;
+    font-size:13px;line-height:1.8;display:none;
+  }
+  .concept-panel.visible{display:block}
+  .concept-panel .kw{color:var(--yellow)}
+  .concept-panel .val{color:var(--green)}
+  .concept-panel .cmt{color:var(--muted)}
+
+  /* PROGRAM AREA */
+  .program-area{
+    background:var(--surface);border-radius:20px;padding:16px;
+    border:2px solid rgba(255,255,255,.08);
+  }
+  .program-label{font-family:'Fredoka One',cursive;font-size:16px;color:var(--muted);margin-bottom:10px}
+
+  /* SLOTS */
+  .slots-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:50px;align-items:center}
+  .slot{
+    width:46px;height:46px;border-radius:10px;
+    background:rgba(255,255,255,.05);border:2px dashed rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;cursor:pointer;transition:all .2s;position:relative;
+  }
+  .slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.08)}
+  .slot.filled:hover{background:rgba(239,68,68,.2);border-color:var(--red)}
+  .slot.executing{animation:slot-flash .4s ease-in-out;border-color:var(--teal)}
+  @keyframes slot-flash{0%,100%{background:rgba(255,255,255,.08)}50%{background:rgba(45,212,191,.3)}}
+  .slot .slot-label{
+    position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:var(--muted);white-space:nowrap;font-family:'Nunito',sans-serif;
+  }
+
+  /* CONDITION SLOT (for if/else) */
+  .cond-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .cond-label{font-size:13px;font-weight:700;color:var(--purple);min-width:50px}
+  .cond-select{
+    background:var(--card);border:1.5px solid rgba(192,132,252,.4);
+    color:var(--white);border-radius:8px;padding:6px 10px;
+    font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;outline:none;
+  }
+  .cond-select:focus{border-color:var(--purple)}
+
+  /* BUTTONS PALETTE */
+  .palette{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .dir-btn{
+    width:46px;height:46px;border-radius:10px;border:none;
+    font-size:22px;cursor:pointer;font-weight:700;
+    transition:all .15s;display:flex;align-items:center;justify-content:center;
+  }
+  .dir-btn:hover{transform:scale(1.1)}
+  .dir-btn:active{transform:scale(.95)}
+  .dir-btn.right{background:#4ade80;color:#052e16}
+  .dir-btn.left{background:#fbbf24;color:#451a03}
+  .dir-btn.up{background:#60a5fa;color:#172554}
+  .dir-btn.down{background:#f87171;color:#450a0a}
+
+  .action-row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-run{background:linear-gradient(135deg,#4ade80,#2dd4bf);color:#052e16;padding:10px 24px;font-size:15px}
+  .btn-clear{background:rgba(239,68,68,.2);color:var(--red);border:1.5px solid rgba(239,68,68,.3);padding:10px 20px;font-size:14px}
+
+  /* FEEDBACK */
+  .feedback{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);
+    background:var(--surface);border-radius:24px;padding:32px 48px;
+    text-align:center;z-index:100;opacity:0;pointer-events:none;
+    transition:all .3s;box-shadow:0 24px 64px rgba(0,0,0,.5);
+    border:2px solid transparent;max-width:420px;width:90%;
+  }
+  .feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:all}
+  .feedback.win{border-color:var(--green)}
+  .feedback.lose{border-color:var(--red)}
+  .fb-icon{font-size:64px;margin-bottom:12px}
+  .fb-title{font-family:'Fredoka One',cursive;font-size:32px;margin-bottom:8px}
+  .fb-msg{font-size:15px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .fb-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  /* CONFETTI */
+  .confetti-piece{
+    position:fixed;width:10px;height:10px;border-radius:2px;
+    animation:confetti-fall 1.5s ease-in forwards;pointer-events:none;z-index:200;
+  }
+  @keyframes confetti-fall{
+    0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+    100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap{background:rgba(255,255,255,.08);border-radius:99px;height:6px;margin-bottom:8px}
+  .progress-bar{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--blue));transition:width .5s}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+
+  @media(max-width:700px){
+    :root{--cell:52px}
+    .game-body{flex-direction:column}
+    .right-panel{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== INTRO ===== -->
+<div id="intro" class="screen active">
+  <div class="bot-hero">🤖</div>
+  <div class="logo">AlgoBot</div>
+  <p class="tagline">Programa tu robot y aprende cómo funcionan los algoritmos</p>
+  <p style="font-size:13px;color:var(--muted);margin-top:-8px">Elige un mundo para comenzar</p>
+
+  <div class="world-cards">
+    <div class="world-card world-1" onclick="startWorld(1)">
+      <div class="icon">🗺️</div>
+      <div class="wname" style="color:#4ade80">Mundo 1</div>
+      <div class="wdesc">Secuencias de pasos</div>
+      <div class="badge" style="color:#4ade80">PASO A PASO</div>
+    </div>
+    <div class="world-card world-2" onclick="startWorld(2)">
+      <div class="icon">🔮</div>
+      <div class="wname" style="color:#c084fc">Mundo 2</div>
+      <div class="wdesc">Condicionales if / else</div>
+      <div class="badge" style="color:#c084fc">SI... ENTONCES...</div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-top:16px">⭐ Gana puntos completando niveles</p>
+</div>
+
+<!-- ===== LESSON ===== -->
+<div id="lesson" class="screen">
+  <div class="lesson-icon" id="lesson-icon">📋</div>
+  <div class="lesson-title" id="lesson-title">Título</div>
+  <div class="lesson-box">
+    <p class="lesson-desc" id="lesson-desc"></p>
+    <div class="concept-visual" id="lesson-code"></div>
+    <div class="lesson-desc" id="lesson-desc2" style="margin-top:12px"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()" style="margin-top:8px">¡Jugar ahora! →</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="game" class="screen">
+  <div class="game-header">
+    <div>
+      <div class="level-info" id="level-label">Nivel 1</div>
+      <div class="progress-wrap" style="width:200px"><div class="progress-bar" id="prog-bar" style="width:10%"></div></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="score-badge">⭐ <span id="score-display">0</span> pts</div>
+      <div class="score-badge" id="lives-display" style="letter-spacing:2px">❤️❤️❤️</div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.08);border:none;color:var(--muted);cursor:pointer" onclick="goHome()">🏠</button>
+    </div>
+  </div>
+
+  <div class="game-body">
+    <!-- GRID -->
+    <div class="grid-wrap">
+      <div id="grid"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="mission-box">
+        <div class="mission-title">🎯 Misión</div>
+        <div class="mission-text" id="mission-text">Lleva al robot hasta la estrella.</div>
+        <div class="mission-hint" id="mission-hint"></div>
+      </div>
+
+      <!-- CONCEPT PANEL for conditionals -->
+      <div class="concept-panel" id="concept-panel">
+        <span class="kw">SI</span> encuentro <span id="cp-cond" class="val">🔑 llave</span><br>
+        &nbsp;&nbsp;<span class="kw">ENTONCES</span> <span class="val">puedo pasar</span><br>
+        <span class="kw">SI NO</span> <span class="val">la puerta está bloqueada</span>
+      </div>
+
+      <!-- PROGRAM -->
+      <div class="program-area">
+        <div class="program-label">📝 Mi programa</div>
+
+        <!-- Conditional rows (world 2 only) -->
+        <div id="cond-rows" style="display:none;margin-bottom:12px">
+          <div class="cond-row">
+            <span class="cond-label">🔵 SI:</span>
+            <select class="cond-select" id="cond-if">
+              <option value="key">Encuentro 🔑</option>
+              <option value="fire">Hay 🔥</option>
+              <option value="ice">Hay 🧊</option>
+              <option value="open">Siempre</option>
+            </select>
+            <span style="font-size:12px;color:var(--muted)">→ ejecutar bloque A</span>
+          </div>
+          <div class="cond-row">
+            <span class="cond-label" style="color:var(--orange)">🟠 SINO:</span>
+            <span style="font-size:13px;color:var(--muted)">ejecutar bloque B</span>
+          </div>
+        </div>
+
+        <!-- Bloque A -->
+        <div id="block-a-label" style="font-size:12px;color:var(--teal);margin-bottom:4px;display:none">
+          Bloque A (condición verdadera):
+        </div>
+        <div class="slots-row" id="slots-a"></div>
+
+        <!-- Bloque B (else) -->
+        <div id="block-b-label" style="font-size:12px;color:var(--orange);margin-bottom:4px;display:none">
+          Bloque B (si no se cumple):
+        </div>
+        <div class="slots-row" id="slots-b" style="display:none"></div>
+
+        <!-- Direction palette -->
+        <div class="palette" id="dir-palette">
+          <button class="dir-btn right" onclick="addDir('➡️','right','A')" title="Derecha">➡️</button>
+          <button class="dir-btn left"  onclick="addDir('⬅️','left','A')"  title="Izquierda">⬅️</button>
+          <button class="dir-btn up"    onclick="addDir('⬆️','up','A')"    title="Arriba">⬆️</button>
+          <button class="dir-btn down"  onclick="addDir('⬇️','down','A')"  title="Abajo">⬇️</button>
+        </div>
+        <div id="block-b-palette" style="display:none;margin-top:8px">
+          <p style="font-size:12px;color:var(--orange);margin-bottom:6px">Bloque B:</p>
+          <div class="palette">
+            <button class="dir-btn right" onclick="addDir('➡️','right','B')" title="Derecha">➡️</button>
+            <button class="dir-btn left"  onclick="addDir('⬅️','left','B')"  title="Izquierda">⬅️</button>
+            <button class="dir-btn up"    onclick="addDir('⬆️','up','B')"    title="Arriba">⬆️</button>
+            <button class="dir-btn down"  onclick="addDir('⬇️','down','B')"  title="Abajo">⬇️</button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-run" onclick="runProgram()">▶ Ejecutar</button>
+          <button class="btn btn-clear" onclick="clearProgram()">✕ Limpiar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME OVER SCREEN -->
+<div id="gameover" class="screen" style="justify-content:center;gap:24px;text-align:center">
+  <div style="font-size:80px;animation:shake 0.5s ease-in-out">💀</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:48px;color:var(--red)">Game Over</div>
+  <p style="font-size:18px;color:var(--muted);max-width:380px">Perdiste todas tus vidas. ¡Los algoritmos son difíciles, pero la práctica hace al maestro!</p>
+  <div style="background:var(--surface);border-radius:20px;padding:20px 40px;border:1px solid rgba(255,255,255,.08)">
+    <p style="font-size:14px;color:var(--muted);margin-bottom:4px">Puntuación final</p>
+    <p style="font-family:'Fredoka One',cursive;font-size:48px;color:var(--yellow)" id="final-score">0</p>
+  </div>
+  <button class="btn btn-primary" style="font-size:18px;padding:14px 40px" onclick="resetGame()">🔄 Volver al inicio</button>
+</div>
+
+
+<div class="feedback" id="feedback">
+  <div class="fb-icon" id="fb-icon">🎉</div>
+  <div class="fb-title" id="fb-title">¡Excelente!</div>
+  <div class="fb-msg" id="fb-msg"></div>
+  <div class="fb-btns">
+    <button class="btn btn-primary" id="fb-next" onclick="nextLevel()">Siguiente nivel →</button>
+    <button class="btn" style="background:rgba(255,255,255,.08);border:none;color:var(--muted)" onclick="retryLevel()">Reintentar</button>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const WORLDS = {
+  1: {
+    name:'Secuencias',color:'#4ade80',
+    lesson:{
+      icon:'🗺️',
+      title:'¿Qué es una secuencia?',
+      desc:'Una secuencia es una lista de instrucciones que se ejecutan una por una, en orden. Como una receta de cocina: primero mezclas, luego horneas.',
+      code:`<span class="kw">INICIO</span>\n  mover_derecha()\n  mover_derecha()\n  mover_abajo()\n  mover_derecha()\n<span class="kw">FIN</span>`,
+      desc2:'El robot seguirá exactamente tus instrucciones. ¡Piensa bien cuántos pasos necesitas antes de ejecutar!'
+    },
+    levels:[
+      // 1 - Tutorial
+      {bot:[0,0],goal:[0,3],obstacles:[],
+       mission:'¡Bienvenido! Lleva al robot 🤖 hasta la estrella ⭐.',
+       hint:'Pista: 3 pasos hacia la derecha →→→'},
+      // 2 - Down + right
+      {bot:[0,0],goal:[2,2],obstacles:[],
+       mission:'Ahora la estrella está en diagonal. Combina flechas ↓ y →',
+       hint:'Pista: baja 2 veces y luego ve a la derecha 2 veces'},
+      // 3 - First wall
+      {bot:[0,0],goal:[0,4],obstacles:[[0,2]],
+       mission:'¡Una pared bloquea el camino directo! Rodéala.',
+       hint:'Pista: baja, avanza, sube, luego sigue a la derecha'},
+      // 4 - Two walls
+      {bot:[0,0],goal:[3,3],obstacles:[[1,2],[2,1]],
+       mission:'Dos paredes en el camino. Encuentra la ruta libre.',
+       hint:'Pista: baja 3 veces, luego ve a la derecha 3 veces'},
+      // 5 - L-shaped wall
+      {bot:[0,0],goal:[3,5],obstacles:[[1,1],[1,2],[1,3],[3,0],[3,1],[3,2]],
+       mission:'¡Hay dos muros en L! Solo hay un camino libre.',
+       hint:'Pista: baja 3 veces, luego ve a la derecha 5 veces'},
+      // 6 - Maze
+      {bot:[0,0],goal:[4,4],obstacles:[[0,2],[1,2],[2,2],[2,3],[2,4],[4,2],[4,3]],
+       mission:'Laberinto intermedio. El camino derecho está bloqueado.',
+       hint:'Pista: baja 3, derecha 1, baja 1, derecha 3'},
+      // 7 - Corner start
+      {bot:[5,5],goal:[0,0],obstacles:[[2,3],[3,2],[3,3],[3,4],[4,2]],
+       mission:'¡El robot empieza en la esquina inferior derecha! Llévalo al origen.',
+       hint:'Pista: sube y ve a la izquierda evitando el bloque central'},
+      // 8 - Zigzag
+      {bot:[0,0],goal:[5,4],obstacles:[[1,1],[1,2],[1,3],[2,4],[2,5],[3,0],[3,1],[4,2],[4,3]],
+       mission:'¡Camino zigzag! Sigue el único corredor libre.',
+       hint:'Pista: el camino serpentea hacia abajo, sigue los huecos'},
+    ]
+  },
+  2: {
+    name:'Condicionales',color:'#c084fc',
+    lesson:{
+      icon:'🔮',
+      title:'¿Qué es un condicional?',
+      desc:'Un condicional le dice al robot: "SI algo es verdad, haz esto; SI NO, haz otra cosa". El robot toma decisiones según lo que encuentra.',
+      code:`<span class="kw">SI</span> encuentro_llave <span class="kw">ENTONCES</span>\n  <span class="val">ir_a_puerta()</span>\n<span class="kw">SI NO</span>\n  <span class="val">buscar_llave()</span>\n<span class="kw">FIN SI</span>`,
+      desc2:'Programa el Bloque A (cuando la condición es verdadera) y el Bloque B (cuando es falsa). ¡El robot decidirá solo!'
+    },
+    levels:[
+      // 1 - Simple key/door intro
+      {bot:[0,0],goal:[5,2],
+       key:[2,2],door:[3,2],
+       obstacles:[[1,3],[4,0],[4,1]],
+       condType:'key',
+       mission:'Hay una 🔑 y una 🚪. Recoge la llave y luego pasa por la puerta.',
+       hint:'Bloque A: ve a buscar la llave (↓↓→→). Bloque B: ve directo a la meta (↓↓↓↓↓)'},
+      // 2 - Key far away
+      {bot:[0,0],goal:[5,5],
+       key:[0,4],door:[3,3],
+       obstacles:[[2,1],[2,2],[4,4]],
+       condType:'key',
+       mission:'La llave 🔑 está lejos en la esquina. El robot debe ir a buscarla antes de cruzar la puerta.',
+       hint:'Bloque A: ve a la llave (→→→→) luego a la puerta (↓↓↓←). Bloque B: camino alternativo'},
+      // 3 - Door blocks center path
+      {bot:[3,0],goal:[3,5],
+       key:[0,2],door:[3,3],
+       obstacles:[[1,3],[2,3],[4,3],[5,3]],
+       condType:'key',
+       mission:'La puerta 🚪 bloquea el único camino. ¡Busca la llave arriba antes de cruzar!',
+       hint:'El robot empieza en la fila 3. Sube a buscar la llave, luego cruza la puerta.'},
+      // 4 - Two routes
+      {bot:[0,0],goal:[5,5],
+       key:[4,0],door:[2,3],
+       obstacles:[[1,2],[1,3],[1,4],[3,1],[3,2]],
+       condType:'key',
+       mission:'¡Ruta larga! La llave está abajo a la izquierda y la puerta en el centro.',
+       hint:'Bloque A: baja a recoger la llave, luego sube y cruza la puerta hacia la meta.'},
+      // 5 - Advanced maze with key
+      {bot:[0,0],goal:[5,4],
+       key:[2,5],door:[3,4],
+       obstacles:[[0,3],[1,3],[2,3],[4,1],[4,2],[4,3]],
+       condType:'key',
+       mission:'Laberinto avanzado. La llave está al otro lado de un pasillo estrecho.',
+       hint:'Ve por el corredor derecho a buscar la llave, luego regresa y cruza la puerta hacia abajo.'},
+      // 6 - Final challenge
+      {bot:[5,0],goal:[0,5],
+       key:[5,4],door:[2,2],
+       obstacles:[[1,0],[1,1],[3,3],[3,4],[3,5],[4,2]],
+       condType:'key',
+       mission:'¡Desafío final! El robot empieza abajo. La llave está lejos y la puerta en el centro.',
+       hint:'Recoge primero la llave en [5,4], luego sube por el lado derecho, cruza la puerta y llega a la meta.'},
+    ]
+  }
+};
+
+// ===================== STATE =====================
+const MAX_LIVES = 3;
+let currentWorld=1, currentLevel=0, score=0, lives=MAX_LIVES;
+let botPos=[], goalPos=[], keyPos=null, doorPos=null;
+let hasKey=false, condType=null;
+let programA=[], programB=[];
+let running=false;
+let levelData={};
+
+// ===================== LIVES =====================
+function renderLives(){
+  const el=document.getElementById('lives-display');
+  if(!el)return;
+  el.textContent = '❤️'.repeat(lives) + '🖤'.repeat(Math.max(0, MAX_LIVES - lives));
+}
+
+function loseLife(title, msg){
+  lives--;
+  renderLives();
+  if(lives<=0){
+    // animate heart loss then show game over
+    setTimeout(()=>showGameOver(), 600);
+  } else {
+    showFeedback(false, title, msg + `  (Vidas restantes: ${lives})`);
+  }
+}
+
+function showGameOver(){
+  hideFeedback();
+  document.getElementById('final-score').textContent = score + ' pts';
+  show('gameover');
+}
+
+function resetGame(){
+  lives = MAX_LIVES;
+  score = 0;
+  currentLevel = 0;
+  show('intro');
+}
+
+// ===================== NAVIGATION =====================
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome(){
+  if(running)return;
+  show('intro');
+}
+
+function startWorld(w){
+  currentWorld=w; currentLevel=0; lives=MAX_LIVES; score=0;
+  const ld=WORLDS[w].lesson;
+  document.getElementById('lesson-icon').textContent=ld.icon;
+  document.getElementById('lesson-title').textContent=ld.title;
+  document.getElementById('lesson-desc').textContent=ld.desc;
+  document.getElementById('lesson-code').innerHTML=ld.code;
+  document.getElementById('lesson-desc2').textContent=ld.desc2;
+  show('lesson');
+}
+
+function startGame(){ show('game'); loadLevel(); }
+
+// ===================== LEVEL LOADER =====================
+function loadLevel(){
+  const w=WORLDS[currentWorld];
+  levelData=w.levels[currentLevel];
+  hasKey=false;
+
+  document.getElementById('level-label').textContent=
+    `${w.name} — Nivel ${currentLevel+1}/${w.levels.length}`;
+  const pct=Math.round((currentLevel/w.levels.length)*100);
+  document.getElementById('prog-bar').style.width=Math.max(8,pct)+'%';
+  document.getElementById('score-display').textContent=score;
+  renderLives();
+
+  document.getElementById('mission-text').textContent=levelData.mission;
+  document.getElementById('mission-hint').textContent=levelData.hint||'';
+
+  const isW2=currentWorld===2;
+  document.getElementById('cond-rows').style.display=isW2?'flex':'none';
+  document.getElementById('block-a-label').style.display=isW2?'block':'none';
+  document.getElementById('block-b-label').style.display=isW2?'block':'none';
+  document.getElementById('slots-b').style.display=isW2?'flex':'none';
+  document.getElementById('block-b-palette').style.display=isW2?'block':'none';
+  document.getElementById('concept-panel').classList.toggle('visible',isW2);
+
+  condType=levelData.condType||null;
+  keyPos=levelData.key?[...levelData.key]:null;
+  doorPos=levelData.door?[...levelData.door]:null;
+
+  clearProgram();
+  buildGrid();
+}
+
+// ===================== GRID =====================
+function buildGrid(){
+  const g=document.getElementById('grid');
+  g.innerHTML='';
+  botPos=[...levelData.bot];
+  goalPos=[...levelData.goal];
+
+  for(let r=0;r<6;r++){
+    for(let c=0;c<6;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.id=`cell-${r}-${c}`;
+      let type='empty', emoji='';
+
+      if(r===botPos[0]&&c===botPos[1])          { emoji='🤖'; type='bot'; }
+      else if(r===goalPos[0]&&c===goalPos[1])    { emoji='⭐'; type='goal'; }
+      else if(keyPos&&r===keyPos[0]&&c===keyPos[1]) { emoji='🔑'; type='key'; }
+      else if(doorPos&&r===doorPos[0]&&c===doorPos[1]) { emoji='🚪'; type='door'; }
+      else if(levelData.obstacles&&levelData.obstacles.some(o=>o[0]===r&&o[1]===c))
+                                                  { emoji='🧱'; type='wall'; }
+
+      cell.dataset.type=type;
+      cell.textContent=emoji;
+      g.appendChild(cell);
+    }
+  }
+}
+
+function getCell(r,c){ return document.getElementById(`cell-${r}-${c}`); }
+
+function setCellContent(r,c,emoji,type){
+  const cell=getCell(r,c);
+  if(!cell)return;
+  cell.textContent=emoji;
+  cell.dataset.type=type||'empty';
+}
+
+// ===================== PROGRAM BUILDER =====================
+const MAX_SLOTS=10;
+
+function addDir(emoji,dir,block='A'){
+  const arr=block==='A'?programA:programB;
+  if(arr.length>=MAX_SLOTS)return;
+  arr.push({emoji,dir});
+  renderSlots();
+}
+
+function clearProgram(){ programA=[]; programB=[]; renderSlots(); }
+
+function removeSlot(block,idx){
+  if(block==='A') programA.splice(idx,1);
+  else programB.splice(idx,1);
+  renderSlots();
+}
+
+function renderSlots(){
+  renderSlotsRow('slots-a',programA,'A');
+  renderSlotsRow('slots-b',programB,'B');
+}
+
+function renderSlotsRow(id,arr,block){
+  const row=document.getElementById(id);
+  row.innerHTML='';
+  for(let i=0;i<MAX_SLOTS;i++){
+    const s=document.createElement('div');
+    s.className='slot'+(arr[i]?' filled':'');
+    s.id=`slot-${block}-${i}`;
+    if(arr[i]){
+      s.textContent=arr[i].emoji;
+      s.onclick=()=>removeSlot(block,i);
+      s.title='Clic para borrar';
+    }
+    row.appendChild(s);
+  }
+}
+
+// ===================== EXECUTION =====================
+async function runProgram(){
+  if(running)return;
+  running=true;
+  buildGrid();
+  hasKey=false;
+
+  if(currentWorld===2&&condType){
+    await runConditionalSequence();
+  } else {
+    await runSequence(programA);
+  }
+  running=false;
+}
+
+async function runSequence(prog){
+  for(let i=0;i<prog.length;i++){
+    highlightSlot('A',i);
+    const moved=await moveBot(prog[i].dir);
+    if(!moved){
+      loseLife('💥 ¡Crash!','El robot chocó con una pared o salió de la cuadrícula. Repasa los pasos.');
+      return false;
+    }
+    if(checkGoal())return true;
+    await sleep(300);
+  }
+  if(!checkGoal()){
+    loseLife('🤔 ¡Sin pasos!','El robot se quedó sin instrucciones antes de llegar. ¿Necesitas más flechas?');
+  }
+  return false;
+}
+
+async function runConditionalSequence(){
+  let won=false;
+  for(let i=0;i<programA.length;i++){
+    highlightSlot('A',i);
+    const moved=await moveBot(programA[i].dir);
+    if(!moved){
+      loseLife('💥 ¡Crash en Bloque A!','El robot chocó. Revisa el Bloque A.');
+      return false;
+    }
+    if(checkGoal()){ won=true; break; }
+    await sleep(300);
+  }
+  if(won)return true;
+
+  if(!hasKey&&programB.length>0){
+    showConditionalEval(false);
+    await sleep(600);
+    for(let i=0;i<programB.length;i++){
+      highlightSlot('B',i);
+      const moved=await moveBot(programB[i].dir);
+      if(!moved){
+        loseLife('💥 ¡Crash en Bloque B!','El robot chocó. Revisa el Bloque B.');
+        return false;
+      }
+      if(checkGoal())return true;
+      await sleep(300);
+    }
+  }
+
+  if(!checkGoal()){
+    loseLife('🤔 Sin llegar a la meta','Revisa ambos bloques: ¿cubren todos los casos posibles?');
+  }
+  return false;
+}
+
+function showConditionalEval(condMet){
+  const cp=document.getElementById('concept-panel');
+  cp.style.borderColor=condMet?'#4ade80':'#f87171';
+  setTimeout(()=>cp.style.borderColor='rgba(192,132,252,.3)',1000);
+}
+
+async function moveBot(dir){
+  let [r,c]=botPos;
+  if(dir==='right')c++;
+  else if(dir==='left')c--;
+  else if(dir==='up')r--;
+  else if(dir==='down')r++;
+
+  if(r<0||r>=6||c<0||c>=6) return false;
+  if(levelData.obstacles&&levelData.obstacles.some(o=>o[0]===r&&o[1]===c)) return false;
+  if(doorPos&&r===doorPos[0]&&c===doorPos[1]&&!hasKey) return false;
+
+  const old=getCell(botPos[0],botPos[1]);
+  if(old){ old.textContent=''; old.dataset.type='empty'; old.classList.add('trail'); setTimeout(()=>old.classList.remove('trail'),800); }
+
+  botPos=[r,c];
+
+  if(keyPos&&r===keyPos[0]&&c===keyPos[1]){
+    hasKey=true; keyPos=null;
+    if(doorPos){ setCellContent(doorPos[0],doorPos[1],'🔓','opendoor'); }
+    showConditionalEval(true);
+  }
+
+  const cell=getCell(r,c);
+  if(cell){ cell.textContent='🤖'; cell.dataset.type='bot'; cell.classList.add('active-bot'); setTimeout(()=>cell.classList.remove('active-bot'),400); }
+  return true;
+}
+
+function checkGoal(){
+  if(botPos[0]===goalPos[0]&&botPos[1]===goalPos[1]){
+    const bonus = Math.max(0, MAX_SLOTS - programA.length - programB.length) * 10;
+    const pts = 100 + bonus;
+    score += pts;
+    document.getElementById('score-display').textContent=score;
+    const isLast=currentLevel>=WORLDS[currentWorld].levels.length-1;
+    showFeedback(true,
+      isLast?'🏆 ¡Mundo completado!':'🎉 ¡Nivel superado!',
+      isLast
+        ? `¡Completaste el Mundo ${currentWorld}! Eres un experto en ${WORLDS[currentWorld].name}.`
+        : `+${pts} puntos. ¡Tu algoritmo funcionó perfecto!`,
+      isLast
+    );
+    spawnConfetti();
+    return true;
+  }
+  return false;
+}
+
+function highlightSlot(block,idx){
+  const el=document.getElementById(`slot-${block}-${idx}`);
+  if(el){ el.classList.add('executing'); setTimeout(()=>el.classList.remove('executing'),400); }
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ===================== FEEDBACK =====================
+function showFeedback(win,title,msg,isWorldEnd=false){
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(win?'win':'lose');
+  document.getElementById('fb-icon').textContent=win?(isWorldEnd?'🏆':'🎉'):'😬';
+  document.getElementById('fb-title').textContent=title;
+  document.getElementById('fb-msg').textContent=msg;
+  const nextBtn=document.getElementById('fb-next');
+  nextBtn.style.display='';
+  if(win&&isWorldEnd){
+    nextBtn.textContent='Ir al inicio 🏠';
+    nextBtn.onclick=()=>{ hideFeedback(); show('intro'); };
+  } else if(win){
+    nextBtn.textContent='Siguiente nivel →';
+    nextBtn.onclick=()=>nextLevel();
+  } else {
+    nextBtn.style.display='none';
+  }
+}
+
+function hideFeedback(){
+  document.getElementById('feedback').className='feedback';
+  running=false;
+}
+
+function nextLevel(){
+  hideFeedback();
+  currentLevel++;
+  if(currentLevel>=WORLDS[currentWorld].levels.length){ show('intro'); return; }
+  loadLevel();
+}
+
+function retryLevel(){
+  hideFeedback();
+  loadLevel();
+}
+
+// ===================== CONFETTI =====================
+function spawnConfetti(){
+  const colors=['#4ade80','#60a5fa','#fbbf24','#f87171','#c084fc','#2dd4bf'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()}s;animation-duration:${1.2+Math.random()*.8}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;transform:rotate(${Math.random()*360}deg);`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2500);
+  }
+}
+</script>
+</body>
+</html>
